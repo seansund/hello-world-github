@@ -1,0 +1,143 @@
+From 8621408b9a7580ace43afc3444d4ae2bcdf3c76b Mon Sep 17 00:00:00 2001
+From: Sean Sundberg <seansund@us.ibm.com>
+Date: Fri, 20 Jul 2018 15:06:47 -0500
+Subject: [PATCH] Updates liberty server script #12
+
+- Moves existing liberty script logic to embeddedliberty
+- Updates liberty script to use liberty plugin
+- Adds path to war file in liberty gradle script
+---
+ build.gradle                        | 12 +++++++++-
+ gradle/build-liberty.gradle         | 37 +++++++++++++++++++++--------
+ gradle/build-libertyembedded.gradle | 15 ++++++++++++
+ src/main/liberty/config/server.xml  |  9 +++++++
+ 4 files changed, 62 insertions(+), 11 deletions(-)
+ create mode 100644 gradle/build-libertyembedded.gradle
+ create mode 100644 src/main/liberty/config/server.xml
+
+diff --git a/build.gradle b/build.gradle
+index c08f54c..00d4821 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -16,6 +16,9 @@ buildscript {
+ 
+         // Needed for build-testlogger
+         classpath 'com.adarshr:gradle-test-logger-plugin:1.3.1'
++
++        // Needed for liberty
++        classpath 'net.wasdev.wlp.gradle.plugins:liberty-gradle-plugin:2.4.1'
+     }
+ }
+ 
+@@ -34,6 +37,13 @@ ext {
+             ],
+             testLogger: [
+                     theme: 'mocha'
++            ],
++            liberty: [
++                    appName: project.name,
++                    appWarFile: project.name + '-' + project.version + '.war',
++                    testServerHttpPort: 9080,
++                    testServerHttpsPort: 9443,
++                    warContext: project.name
+             ]
+     ]
+ }
+@@ -55,7 +65,7 @@ apply from:   'gradle/build-jacoco.gradle'
+ apply from:   'gradle/build-swagger.gradle'
+ apply from:   'gradle/build-springactuator.gradle'
+ apply from:   'gradle/build-githooks.gradle'
+-//apply from:   'gradle/build-liberty.gradle'
++apply from:   'gradle/build-liberty.gradle'
+ 
+ repositories {
+     mavenCentral()
+diff --git a/gradle/build-liberty.gradle b/gradle/build-liberty.gradle
+index 27606c9..68c7e1a 100644
+--- a/gradle/build-liberty.gradle
++++ b/gradle/build-liberty.gradle
+@@ -1,15 +1,32 @@
+ 
+-repositories {
+-    mavenCentral()
+-    maven {
+-        url "https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/spring-starter-alpha1"
+-    }
+-}
++apply plugin: 'liberty'
+ 
+ dependencies {
+-    compile('org.springframework.boot:spring-boot-starter-web') {
+-        exclude module: "spring-boot-starter-tomcat"
++    libertyRuntime group: 'io.openliberty', name: 'openliberty-runtime', version: '[17.0.0.4,)'
++}
++
++if (!project.ext.has('config')) {
++    project.ext['config'] = [:]
++}
++
++def localAppName = config.liberty?.appName ?: project.name
++def localAppWarFile = config.liberty?.appWarFile ?: '../build/libs/' + project.name + '-' + project.version + '.war'
++def localTestServerHttpPort = config.liberty?.testServerHttpPort ?: 9080
++def localTestServerHttpsPort = config.liberty?.testServerHttpsPort ?: 9443
++def localWarContext = config.liberty?.warContext ?: "/"
++
++liberty {
++    server {
++        name = "${localAppName}Server"
++        configFile = file("src/main/liberty/config/server.xml")
++        bootstrapProperties = ['app.id': localAppName,
++                               'app.warFile': localAppWarFile,
++                               'default.http.port': localTestServerHttpPort,
++                               'default.https.port': localTestServerHttpsPort,
++                               'app.context.root': localWarContext]
++        packageLiberty {
++            archive = "$buildDir/${localAppName}.zip"
++            include = "usr"
++        }
+     }
+-    compile('io.openliberty.boot:liberty-spring-boot-starter:0.5.0.M1')
+-    compile('io.openliberty.boot:liberty-boot-ssl:0.5.0.M1')
+ }
+\ No newline at end of file
+diff --git a/gradle/build-libertyembedded.gradle b/gradle/build-libertyembedded.gradle
+new file mode 100644
+index 0000000..27606c9
+--- /dev/null
++++ b/gradle/build-libertyembedded.gradle
+@@ -0,0 +1,15 @@
++
++repositories {
++    mavenCentral()
++    maven {
++        url "https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/spring-starter-alpha1"
++    }
++}
++
++dependencies {
++    compile('org.springframework.boot:spring-boot-starter-web') {
++        exclude module: "spring-boot-starter-tomcat"
++    }
++    compile('io.openliberty.boot:liberty-spring-boot-starter:0.5.0.M1')
++    compile('io.openliberty.boot:liberty-boot-ssl:0.5.0.M1')
++}
+\ No newline at end of file
+diff --git a/src/main/liberty/config/server.xml b/src/main/liberty/config/server.xml
+new file mode 100644
+index 0000000..09c45d3
+--- /dev/null
++++ b/src/main/liberty/config/server.xml
+@@ -0,0 +1,9 @@
++<server description="Sample Servlet server">
++    <featureManager>
++        <feature>servlet-3.1</feature>
++    </featureManager>
++
++    <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}" id="defaultHttpEndpoint"  host="*" />
++
++    <webApplication id="${app.id}" location="${app.warFile}" contextRoot="${app.context.root}" />
++</server>
+\ No newline at end of file
+-- 
+2.17.1
+

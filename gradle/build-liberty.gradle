@@ -1,15 +1,32 @@
 
-repositories {
-    mavenCentral()
-    maven {
-        url "https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/spring-starter-alpha1"
-    }
-}
+apply plugin: 'liberty'
 
 dependencies {
-    compile('org.springframework.boot:spring-boot-starter-web') {
-        exclude module: "spring-boot-starter-tomcat"
+    libertyRuntime group: 'io.openliberty', name: 'openliberty-runtime', version: '[17.0.0.4,)'
+}
+
+if (!project.ext.has('config')) {
+    project.ext['config'] = [:]
+}
+
+def localAppName = config.liberty?.appName ?: project.name
+def localAppWarFile = config.liberty?.appWarFile ?: '../build/libs/' + project.name + '-' + project.version + '.war'
+def localTestServerHttpPort = config.liberty?.testServerHttpPort ?: 9080
+def localTestServerHttpsPort = config.liberty?.testServerHttpsPort ?: 9443
+def localWarContext = config.liberty?.warContext ?: "/"
+
+liberty {
+    server {
+        name = "${localAppName}Server"
+        configFile = file("src/main/liberty/config/server.xml")
+        bootstrapProperties = ['app.id': localAppName,
+                               'app.warFile': localAppWarFile,
+                               'default.http.port': localTestServerHttpPort,
+                               'default.https.port': localTestServerHttpsPort,
+                               'app.context.root': localWarContext]
+        packageLiberty {
+            archive = "$buildDir/${localAppName}.zip"
+            include = "usr"
+        }
     }
-    compile('io.openliberty.boot:liberty-spring-boot-starter:0.5.0.M1')
-    compile('io.openliberty.boot:liberty-boot-ssl:0.5.0.M1')
 }
