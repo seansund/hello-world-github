@@ -26,6 +26,7 @@ services:
     service_id: githubconsolidated
     parameters:
       repo_name: '{{toolchain.name}}'
+      source_repo_url: 'https://github.ibm.com/seansund/template-spring-boot'
       repo_url: 'https://github.ibm.com/seansund/template-spring-boot'
       type: clone
       has_issues: true
