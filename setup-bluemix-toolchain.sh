@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
 
-#  sample-repo:
-#    service_id: hostedgit
-#    parameters:
-#      repo_name: '{{toolchain.name}}'
-#      repo_url: 'https://github.ibm.com/seansund/template-spring-boot'
-#      type: clone
-#      has_issues: true
-#      enable_traceability: true
-
 # console echo colors
 #  \033[1;31m red
 #  \033[1;32m green
@@ -87,8 +78,7 @@ fi
 echo ""
 
 ### project name
-# TODO get the default repo name from settings.gradle
-default_project_name=${PWD##*/}
+default_project_name=$(cat settings.gradle | grep "rootProject.name" | sed "s/rootProject.name \{0,1\}= \{0,1\}'\(.*\)'/\1/g")
 echo -e -n "  repo name (\033[1;38m${default_project_name}\033[0m): "
 
 read project_name
