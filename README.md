@@ -9,7 +9,7 @@ the underlying template is updated.
 To get started clone this repo into a local folder, preferably one with a different name:
 
 ```bash
-git clone {url} {new_name}
+git clone --single-branch {url} {new_name}
 ```
 
 Next, run the `setup-template.sh` script. It will ask for you project name and the url to your new 
