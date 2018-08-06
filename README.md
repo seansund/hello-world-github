@@ -20,13 +20,9 @@ git clone --single-branch {url} {new_name}
 
 #### Create the toolchain
 
-Create the toolchain and clone the project into a new repository. There are three different destinations for 
-repositories in the IBM toolchain so there are three different branches/buttons. Click the appropriate link below
-then click the subsequent 'Create toolchain'.
+Create the toolchain and clone the project into an IBM Hosted GitLab repository by clicking on the button
 
-* [GitHub](tree/toolchain_github)
-* [IBM Hosted GitLab](tree/toolchain_gitlab)
-* [GitHub Enterprise Whitewater](tree/toolchain_ibmghe)
+[![Deploy To Bluemix](https://console.ng.bluemix.net/devops/graphics/create_toolchain_button.png)](https://console.ng.bluemix.net/devops/setup/deploy/?repository=https://github.ibm.com/seansund/template-spring-boot&repository_token=615201574e514665d9f8e570cdb77a5d6a1f0258&branch=toolchain_gitlab)
 
 
 ### Set up the project from the template
